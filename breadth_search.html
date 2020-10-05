@@ -1,0 +1,314 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breadth-first search</title>
+    <style>
+        body {
+            margin-top: 5%;
+            margin-left: 10%;
+            font-weight: bold;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        button,
+        #submit {
+            background-color: #0C0C0C;
+            color: #ffffff;
+            border-color: #69FF13;
+            border-radius: 4px;
+        }
+
+        button:hover {
+            background-color: #6A6A6A;
+            border-color: #86FF59;
+            cursor: pointer;
+        }
+
+        select {
+            background-color: #6A6A6A;
+            color: #ffffff;
+            border-radius: 4px;
+            min-height: 21px;
+        }
+
+        select:focus {
+            background-color: #4e0092;
+        }
+    </style>
+</head>
+<div>
+    <form onsubmit="return false">
+        <label for="fname">Title:</label>
+        <input type="text" id="nodeValue" name="nodeValue">
+        <label for="fname">Link to:</label>
+        <select id="nodeToLink"></select>
+        <select id="nodeToLink2"></select>
+        <select id="nodeToLink3"></select>
+        <button onclick="addClicked()">Add</button>
+</div>
+</form>
+</div>
+<div><span>Choose the start node for breadth search: </span>
+    <select id="nodeList"></select>
+    <button onclick="searchClicked()">Search</button></div>
+<div id="canvas"></div>
+<script type="text/javascript" src="https://www.graphdracula.net/js/raphael-min.js"></script>
+<script type="text/javascript" src="https://www.graphdracula.net/js/graffle.js"></script>
+<script type="text/javascript" src="https://www.graphdracula.net/js/graph.js"></script>
+<script>
+    /**
+    * Performs a breadth search
+    *
+    * @param {*} startNode - The node from which to start search
+    * @returns {string} searchString - Names of all visited nodes 
+    */
+    function BreadthSearch(startNode) {
+        let searchString = "";
+        let queue = new Queue;
+        queue.enqueue(startNode);
+        startNode.visited = true;
+        searchString = `${searchString} ${startNode.value}`;
+        startNode.links.forEach(element => {
+            element.visited = true;
+            queue.enqueue(element);
+            searchString = `${searchString} ${element.value}`;
+        });
+        while (queue.elements.length > 0) {
+            currNode = queue.dequeue();
+            currNode.links.forEach(element => {
+                if (element.visited == false) {
+                    element.visited = true;
+                    queue.enqueue(element);
+                    searchString = `${searchString} ${element.value}`;
+                }
+            })
+        }
+        console.log(queue.elements)
+        resetVisitedNodes();
+        return searchString;
+    }
+    /**
+     * Resets all visited nodes to unvisited
+     */
+    function resetVisitedNodes() {
+        graph.nodes.forEach(element => {
+            element.visited = false;
+        });
+    }
+    /**
+    * Represents a queue
+    */
+    function Queue() {
+        this.elements = [];
+    }
+    /**
+    * Enqueues a element in the queue
+    * @param {*} e - The element to enqueue
+    */
+    Queue.prototype.enqueue = function (e) {
+        this.elements.push(e);
+    };
+    /**
+    * Dequeues a element from the queue
+    * @returns {*} - The element that was dequeued
+    */
+    Queue.prototype.dequeue = function () {
+        return this.elements.shift();
+    };
+    /**
+    * Creates a new node
+    */
+    function addClicked() {
+        let newNode = new Node(document.getElementById('nodeValue').value);
+        if (document.getElementById('nodeToLink').value !== null) {
+            graph.nodes.forEach(element => {
+                if (element.value == document.getElementById('nodeToLink').value) {
+                    newNode.addLink(element);
+                    element.addLink(newNode);
+                }
+            });
+        }
+        if (document.getElementById('nodeToLink2').value !== null) {
+            graph.nodes.forEach(element => {
+                if (element.value == document.getElementById('nodeToLink2').value) {
+                    newNode.addLink(element);
+                    element.addLink(newNode);
+                }
+            });
+        }
+        if (document.getElementById('nodeToLink3').value !== null) {
+            graph.nodes.forEach(element => {
+                if (element.value == document.getElementById('nodeToLink3').value) {
+                    newNode.addLink(element);
+                    element.addLink(newNode);
+                }
+            });
+        }
+        graph.nodes.push(newNode);
+        drawGraph();
+        document.getElementById('nodeToLink').value = null;
+        document.getElementById('nodeToLink2').value = null;
+        document.getElementById('nodeToLink3').value = null;
+        document.getElementById('nodeValue').value = null;
+        loadNodesInOption();
+    }
+    /**
+    * Draws a graph
+    */
+    function drawGraph() {
+        document.getElementById('canvas').innerHTML = "";
+        var redraw;
+        window.height = window.screen.height * 0.7;
+        window.width = window.screen.width * 0.7;
+        var g = new Graph();
+        graph.nodes.forEach(nod => {
+            nod.links.forEach(element => {
+                g.addEdge(nod.value, element.value)
+            });
+        });
+        var layouter = new Graph.Layout.Spring(g);
+        layouter.layout();
+        var renderer = new Graph.Renderer.Raphael('canvas', g, width, height);
+        renderer.draw();
+        redraw = function () {
+            layouter.layout();
+            renderer.draw();
+        };
+    }
+    /**
+    * Resets and loads all nodes in the node option dropdowns
+    */
+    function loadNodesInOption() {
+        document.getElementById('nodeList').options.length = 0;
+        document.getElementById('nodeToLink').options.length = 0;
+        document.getElementById('nodeToLink2').options.length = 0;
+        document.getElementById('nodeToLink3').options.length = 0;
+        let select = document.getElementById('nodeList');
+        let select2 = document.getElementById('nodeToLink');
+        let select3 = document.getElementById('nodeToLink2');
+        let select4 = document.getElementById('nodeToLink3');
+        for (let i = 0; i < graph.nodes.length; i++) {
+            let option = document.createElement('option');
+            let option2 = document.createElement('option');
+            let option3 = document.createElement('option');
+            let option4 = document.createElement('option');
+            option.text = graph.nodes[i].value;
+            option2.text = option.text;
+            option3.text = option.text;
+            option4.text = option.text;
+            option.value = option.text;
+            option2.value = option.text;
+            option3.value = option.text;
+            option4.value = option.text;
+            select.add(option, 0);
+            select2.add(option2, 0);
+            select3.add(option3, 0);
+            select4.add(option4, 0);
+        }
+        let option2 = document.createElement('option');
+        let option3 = document.createElement('option');
+        let option4 = document.createElement('option');
+        option2.text = "-";
+        option3.text = "-";
+        option4.text = "-";
+        option2.value = null;
+        option3.value = null;
+        option4.value = null;
+        select2.add(option2, 0);
+        select3.add(option3, 0);
+        select4.add(option4, 0);
+        select2.value = null;
+        select3.value = null;
+        select4.value = null;
+    }
+     /**
+     * Finds a node with value corresponding to selected from the dropdown
+     */
+    function searchClicked() {
+        let selectedNodeValue = document.getElementById('nodeList').options[document.getElementById('nodeList').selectedIndex].text;
+        let selectedNode;
+        graph.nodes.forEach(element => {
+            if (element.value == selectedNodeValue) {
+                selectedNode = element;
+            }
+        });
+        alert(`Visited nodes: ${BreadthSearch(selectedNode)}`);
+    }
+    /**
+     * Represents a node graph
+     * @constructor
+     */
+    class NodeGraph {
+        constructor() {
+            this.nodes = [];
+        }
+    }
+    /**
+     * Represents a node
+     * @constructor
+     * @param {*} value - The value of the node
+     */
+    class Node {
+        constructor(value) {
+            this.value = value;
+            this.links = [];
+            this.visited = false;
+            this.addLink = function (nodeTo) {
+                this.links.push(nodeTo);
+            }
+        }
+    }
+    /**
+     * Creates a few example nodes for the node graph
+     */
+    function createExampleNodes() {
+        let nodeA = new Node("A");
+        let nodeB = new Node("B");
+        let nodeC = new Node("C");
+        let nodeD = new Node("D");
+        let nodeE = new Node("E");
+        let nodeF = new Node("F");
+        let nodeG = new Node("G");
+        let nodeH = new Node("H");
+        nodeA.addLink(nodeB);
+        nodeA.addLink(nodeD);
+        nodeA.addLink(nodeG);
+        nodeB.addLink(nodeA);
+        nodeB.addLink(nodeE);
+        nodeB.addLink(nodeF);
+        nodeC.addLink(nodeF);
+        nodeC.addLink(nodeH);
+        nodeD.addLink(nodeA);
+        nodeD.addLink(nodeF);
+        nodeE.addLink(nodeB);
+        nodeE.addLink(nodeG);
+        nodeF.addLink(nodeB);
+        nodeF.addLink(nodeC);
+        nodeF.addLink(nodeD);
+        nodeG.addLink(nodeA);
+        nodeG.addLink(nodeE);
+        nodeH.addLink(nodeC);
+        graph.nodes.push(nodeA);
+        graph.nodes.push(nodeB);
+        graph.nodes.push(nodeC);
+        graph.nodes.push(nodeD);
+        graph.nodes.push(nodeE);
+        graph.nodes.push(nodeF);
+        graph.nodes.push(nodeG);
+        graph.nodes.push(nodeH);
+    }
+    /**
+     * Object of node graph
+     * @type {NodeGraph}
+     */
+    let graph = new NodeGraph();
+    window.onload = function () {
+        createExampleNodes();
+        loadNodesInOption();
+        drawGraph();
+    };
+</script>
+
+</html>
